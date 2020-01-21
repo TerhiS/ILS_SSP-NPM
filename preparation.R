@@ -26,13 +26,15 @@ registerDoParallel(numCores)
 resamp <- function(x,...){if(length(x)==1) x else sample(x,...)} 
 
 ### instances
-# data available on http://dx.doi.org/10.17632/ggr36f5gd5.2
-# note: the files must be in the working directory! Otherwise, change working directory accordingly!
-setwd("example_data/")
+# data available on https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Iterated_Local_Search
+# note: there are two different data sets: SSP-NPM-I and SSP-NPM-II
+# default folder: "example_instance/"
+# if required change to "SSP-NPM-I/" or "SSP-NPM-II/"
+setwd("Instances/example_instance")
 csv_files <- list.files(pattern = 'ins*',all.files = T,full.names = T)
 csv_files <- naturalsort(csv_files)
 data.list <- lapply(csv_files,read.table,sep=";",header=F)
-setwd("~/GitHub/MIP_SSP-NPM/ILS")
+setwd("~/GitHub/ILS_SSP-NPM/")
 # =======================================
 # END preparation
 # =======================================

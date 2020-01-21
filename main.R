@@ -25,17 +25,19 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # set or create working directory 
-if(dir.exists(paths = "~/GitHub/ILS_SSP-NPM/ILS") == T){
-  setwd("~/GitHub/ILS_SSP-NPM/ILS")
+if(dir.exists(paths = "~/GitHub/ILS_SSP-NPM") == T){
+  setwd("~/GitHub/ILS_SSP-NPM")
 } else {
-  dir.create(path = "~/GitHub/ILS_SSP-NPM/ILS")
-  setwd("~/GitHub/ILS_SSP-NPM/ILS")
+  dir.create(path = "~/GitHub/ILS_SSP-NPM")
+  setwd("~/GitHub/ILS_SSP-NPM")
 }
 
 # install and load packages and include instances in data.list 
+# the default instance folder is "example_instance/"
+# if required change the folder in "preparation.R" to "SSP-NPM-I/" or "SSP-NPM-II/"
 source("preparation.R",echo = F)
 
-# run construction heuristic
+# run construction heuristics (IEACT, IGI, MSR)
 source("constr_heur.R",echo = F)
 # Note: The output of the construction heuristic applied to each %instance% 
 #       will be stored in a separate file: CH%instance%.csv. 
