@@ -25,11 +25,11 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # set or create working directory 
-if(dir.exists(paths = "~/GitHub/ILS_SSP-NPM") == T){
-  setwd("~/GitHub/ILS_SSP-NPM")
+if(dir.exists(paths = "~/GitHub/ILS_SSP-NPM/Heuristics") == T){
+  setwd("~/GitHub/ILS_SSP-NPM/Heuristics")
 } else {
-  dir.create(path = "~/GitHub/ILS_SSP-NPM")
-  setwd("~/GitHub/ILS_SSP-NPM")
+  dir.create(path = "~/GitHub/ILS_SSP-NPM/Heuristics")
+  setwd("~/GitHub/ILS_SSP-NPM/Heuristics")
 }
 
 # install and load packages and include instances in data.list 
@@ -37,13 +37,17 @@ if(dir.exists(paths = "~/GitHub/ILS_SSP-NPM") == T){
 # if required change the folder in "preparation.R" to "SSP-NPM-I/" or "SSP-NPM-II/"
 source("preparation.R",echo = F)
 
-# run construction heuristics (IEACT, IGI, MSR)
+# run  all construction heuristics (IEACT, IGI, MSR)
 source("constr_heur.R",echo = F)
-# Note: The output of the construction heuristic applied to each %instance% 
-#       will be stored in a separate file: CH%instance%.csv. 
+# Note: The output of the construction heuristic %heuristic% applied to each %instance% 
+#       will be stored in a separate file: %heuristic%%instance%.csv. 
 #       The file is required for running the ILS.
 #       Changes can be made to use the contruction heuristic and the ILS together.
 #       Therefore, remove the "Read Input Data"-part in ILS.R and replace it with the output variables of constr_heur.R.
+# The construction heuristics can be run individually 
+source("construction_heurstics/IEACT.R",echo = F)
+source("construction_heurstics/IGI.R",echo = F)
+source("construction_heurstics/MSR.R",echo = F)
 
 # run iterated local search
 source("ils.R",echo = F)

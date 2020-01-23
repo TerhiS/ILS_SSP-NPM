@@ -19,7 +19,7 @@
 ############### Start IEACT #################
 # ===========================================
 
-# for all problem instances in the data set (default: SSP-NPM-I)
+# for all problem instances in the data set (default: example_instance)
 for (instance in 1:length(data.list)) {
   
   # ===============
@@ -293,7 +293,7 @@ for (instance in 1:length(data.list)) {
         # if free slot available
       } else if (length((req_t[[active_j]])) < cap_m[[m]]) {
      
-        # position in the array of the tools in common with future required tools
+        # tool position in the array of the tools in common with future required tools
         hu <- match(req_t[[active_j]], aux_req[[m]])
         # without tools, never used again
         hu <- hu[!is.na(hu)]
@@ -422,8 +422,8 @@ for (instance in 1:length(data.list)) {
   loads[1:max_j] <- load_t[1:max_j]
   loads <- capture.output(cat(paste0(strwrap(loads))))
   
-  # write solution of the construction heuristic (CH) to file
-  setwd("results/")
+  # write solution of the construction heuristic (IEACT) to file
+  setwd("results/example_results/")
   mat <- as.matrix(rbind(switch, tft, fmax, c_time[1], seq, loads))
   f_ch <- paste0("./IEACT", instance, ".csv", sep = "")
   if (file.exists(f_ch) == T) {
@@ -438,7 +438,7 @@ for (instance in 1:length(data.list)) {
       col.names = F
     )
   }
-  setwd("~/GitHub/ILS_SSP-NPM")
+  setwd("~/GitHub/ILS_SSP-NPM/Heuristics")
   # remove all variables and parameters except instances and instance counter
   rm(list = ls()[!ls() %in% c("data.list", "csv_files", "instance", "resamp")])
 }
