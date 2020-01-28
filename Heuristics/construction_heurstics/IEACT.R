@@ -1,5 +1,5 @@
 # =======================================
-# Title: Construction heuristic for the SSP-NPM
+# Title: Construction heuristic IEACT for the SSP-NPM
 # =======================================
 
 # Description: Computes total flowtime / makespan / number of tool switches for the job sequencing and tool switching problm
@@ -11,8 +11,7 @@
 # param sw Tool Switching Time of the Machines
 # param bks Best Known Solution for specific objective
 # @bks = {flowtime, makespan, switches}
-# param heur Type of Heuristic
-# @heur = {GI // "tool switches objective",IEACT // "makespan & flowtime objective}
+
 
 
 # ===========================================
@@ -68,7 +67,7 @@ for (instance in 1:length(data.list)) {
   sw_m <- array()
   sw_m[1:max_m] <- unlist(df[3, 1:max_m])
   
-  ### Initial makespan of machine m @f[m]
+  ### Initial completion time of the last job of machine m @f[m]
   f <- array()
   f[1:max_m] <- 0
   
@@ -100,7 +99,7 @@ for (instance in 1:length(data.list)) {
   # Job Assignment
   # ============
 
-  # unassigned jobs with the help of setting the processing time of processed jobs to infinity
+  # unassigned jobs j_left with the help of setting the processing time of processed jobs to infinity
   j_left <- which(p_m_IEACT[[1]] != Inf)
   
   # while still jobs to process
@@ -155,7 +154,7 @@ for (instance in 1:length(data.list)) {
       }
     }
     
-    # if the job is not the first job then tool swtiches have to be considered
+    # if the job is not the first job, then tool swtiches have to be considered
     else {
       # of all jobs left
       previous_j <-
@@ -191,7 +190,6 @@ for (instance in 1:length(data.list)) {
       pi_m_IEACT[(length(pi_m_IEACT[, free_m][!is.na(pi_m_IEACT[, free_m])]) +
                   1), free_m] <- j_min
       # update completion time of that job on machine m plus approximated tool switching time
-      # !!!
       f[free_m] <- f[free_m] + df_part[[1]][j_min]
       # remove job from data frame for all machines
       for (m in 1:max_m) {
@@ -251,7 +249,7 @@ for (instance in 1:length(data.list)) {
         }
       }
     }
-    # NEW!!! if there is no job on that machine
+    # if there is no job on that machine
     else{
       warning(paste0("No jobs assigned to machine ",m,"!"))
       t_req_m[[m]] <- NA
@@ -294,14 +292,14 @@ for (instance in 1:length(data.list)) {
       } else if (length((req_t[[active_j]])) < cap_m[[m]]) {
      
         # tool position in the array of the tools in common with future required tools
-        hu <- match(req_t[[active_j]], aux_req[[m]])
+        tool_pos <- match(req_t[[active_j]], aux_req[[m]])
         # without tools, never used again
-        hu <- hu[!is.na(hu)]
+        tool_pos <- tool_pos[!is.na(tool_pos)]
         # remove the tools already in the magazine
-        if (sum(hu) > 0) {
-          aux_req[[m]] <- aux_req[[m]][-hu]
+        if (sum(tool_pos) > 0) {
+          aux_req[[m]] <- aux_req[[m]][-tool_pos]
         }
-        remove(hu)
+        remove(tool_pos)
         # add tool required the soonest in the free slot
         for (free_slot in (length(req_t[[active_j]]) + 1):cap_m[[m]]) {
           # put next tool in free slot that is required earliest..
@@ -319,8 +317,9 @@ for (instance in 1:length(data.list)) {
   }
   remove(m)
 
-  ### tool optimization
+  ### tool optimization for remaining jobs
   for (m in 1:max_m) {
+    # if there is only one job in the sequence on machine m
     if (length(l_IEACT[[m]]) == 1) {
       active_j <- l_IEACT[[m]][1]
       ct[active_j] <- p_m[[m]][active_j]
@@ -328,10 +327,14 @@ for (instance in 1:length(data.list)) {
       for (active_j_pos in 2:length(l_IEACT[[m]])) {
         active_j <- l_IEACT[[m]][active_j_pos]
         previous_j <- l_IEACT[[m]][active_j_pos - 1]
+        # new tools required
         not_match <-
           which(!is.na(match(req_t[[active_j]], load_t[[previous_j]])) == F)
+        # required tools that are already loaded
         yes_match <-
           which(!is.na(match(req_t[[active_j]], load_t[[previous_j]])) == T)
+        # at most required tool switches
+        # !!!
         ts_j[active_j] <- length(not_match)
         # if no tools are to be replaced because required tools are already loaded
         if (length(yes_match) == length(req_t[[active_j]])) {
@@ -425,11 +428,11 @@ for (instance in 1:length(data.list)) {
   # write solution of the construction heuristic (IEACT) to file
   setwd("results/example_results/")
   mat <- as.matrix(rbind(switch, tft, fmax, c_time[1], seq, loads))
-  f_ch <- paste0("./IEACT", instance, ".csv", sep = "")
-  if (file.exists(f_ch) == T) {
+  f_ieact <- paste0("./IEACT", instance, ".csv", sep = "")
+  if (file.exists(f_ieact) == T) {
     print("file already exists")
   }
-  if (file.exists(f_ch) == F) {
+  if (file.exists(f_ieact) == F) {
     write.table(
       mat,
       paste("./IEACT", instance, ".csv", sep = ""),

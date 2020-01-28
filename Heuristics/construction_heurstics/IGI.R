@@ -1,5 +1,3 @@
-##------ Thu Oct 10 10:47:15 2019 ------##
-
 # =======================================
 # Title: IGI construction heuristic for the SSP-NPM
 # =======================================
@@ -13,246 +11,237 @@
 # param sw Tool Switching Time of the Machines
 # param bks Best Known Solution for specific objective
 # @bks = {flowtime, makespan, switches}
-# param heur Type of Heuristic
-# @heur = {GI // "tool switches objective",SPT // "makespan & flowtime objective}
 
-# =======================================
-# file and package preparation
-# =======================================
 
-# set working directory
-# setwd("C:/Users/Administrator/Dropbox/EURO/Instances")
-setwd("C:/Users/Administrator/Dropbox/Las_Papers/SSP-NPM-I")
-setwd("E:/Dorothea/Las Paper/SSP-NPM-I/")
-
-# install required packages if not installed
-list.of.packages <- c("naturalsort", "tictoc","R.utils","matrixStats")
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
-
-# load the required packages
-library(matrixStats)
-library(R.utils)
-library(tictoc)
-library("naturalsort")
-
-# required function that includes sample of length one
-resamp <- function(x,...){if(length(x)==1) x else sample(x,...)} 
-
-### !!!Compute this before running the process!!! ###
-csv_files <- list.files(pattern = 'ins*',all.files = T,full.names = T)
-csv_files <- naturalsort(csv_files)
-data.list <- lapply(csv_files,read.table,sep=";",header=F)
 
 # ===========================================
-################## Start  ######################
+############### Start IEACT #################
 # ===========================================
 
-# ===========================================
-######## Start of getting input data ########
-for (instance in 1:length(data.list)){
-
-  #### retrieve input parameters from data frame ####
+# for all problem instances in the data set (default: example_instance)
+for (instance in 1:length(data.list)) {
+  # ===============
+  # Get input data
+  # ===============
+  
+  #### retrieve input parameters from data frame
   df <- as.data.frame(data.list[[instance]])
-  # Columns
-  colnames(df) <- c(1:length(df[1,]))
-  # Rows
-  row.names(df) <- c(1:length(df[,1]))
+  colnames(df) <- c(1:length(df[1,]))     # Columns
+  row.names(df) <- c(1:length(df[, 1]))    # Rows
   
   #### Initialization of parameters & sets (jobs, machines, tools, req_tools, capacity)
-  ### Number of jobs
-  max_j <- df[1,2]
-  
-  ### Number of machines
-  max_m <- df[1,1]
+  max_j <- df[1, 2]    ### Number of jobs @max_j
+  max_m <- df[1, 1]    ### Number of machines @max_m
   
   ### Tools
-  # Number of tools
-  max_t <- df[1,3]
-  # Set of tools required for job j
-  req_t <- list()
-  for (j in 1:max_j){
-    req_t[[j]] <- which(df[((4+max_m):(4+max_m+max_t-1)),j]==1)
+  max_t <- df[1, 3]    # Number of tools @max_t
+  
+  req_t <- list()    # Set of tools required for job j @req_T
+  for (j in 1:max_j) {
+    req_t[[j]] <-
+      which(df[((4 + max_m):(4 + max_m + max_t - 1)), j] == 1)
   }
   remove(j)
   
-  # job tool matrix (required for tool switches)
-  matrix <- df[((4+max_m):length(df[,1])),(1:max_j)]
+  # job tool matrix (required for tool switches) @matrix
+  matrix <- df[((4 + max_m):length(df[, 1])), (1:max_j)]
   row.names(matrix) <- c(1:max_t)
   colnames(matrix) <- c(1:max_j)
   
-  #      ### Capacity cap_m[[m]] of machine m
+  ### Capacity cap_m[[m]] of machine m
   cap_m <- list()
-  for (m in 1:max_m){
-    cap_m[[m]] <- (df[2,m])
+  for (m in 1:max_m) {
+    cap_m[[m]] <- (df[2, m])
   }
   remove(m)
   
-  ### Processing Times of the jobs on machine m @p_m[[m]] 
+  ### Processing Times of the jobs on machine m @p_m[[m]]
   p_m <- list()
-  for(m in 1:max_m){
-    p_m[[m]] <- df[(3+m),(1:max_j)]
+  for (m in 1:max_m) {
+    p_m[[m]] <- df[(3 + m), (1:max_j)]
   }
   remove(m)
   
-  ### Switching Times of machine m @sw_m[m] 
+  ### Switching Times of machine m @sw_m[m]
   sw_m <- array()
-  sw_m[1:max_m] <- unlist(df[3,1:max_m])
+  sw_m[1:max_m] <- unlist(df[3, 1:max_m])
   
-  ### Initial makespan of machine m @f[m]
+  ### Initial completion time of the last job of machine m @f[m]
   f <- array()
   f[1:max_m] <- 0
   
+  # job tool matrix (required for tool switches)
+  matrix <- df[((4 + max_m):length(df[, 1])), (1:max_j)]
+  row.names(matrix) <- c(1:max_t)
+  colnames(matrix) <- c(1:max_j)
   # auxiliary matrix required to track jobs to be scheduled
   jt_matrix <- matrix
   jt_matrix_new <- matrix
-  
   ##############################################
   
   # =====================================
   ########## IGI algorithm ############
   # =====================================
   
-  ##### Start of computation time counter ####
-  tic("GI")
   #### additional input parameters and sets ####
   # auxiliary list for processing times
-  p_m_gi <- p_m
+  # p_m_IGI <- p_m
   # initialisation job sequence pi_m on machine m
-  pi_m_GI <- data.frame(matrix(ncol=max_m,nrow=max_j))
-  colnames(pi_m_GI) <- c(1:max_m)
+  pi_m_IGI <- data.frame(matrix(ncol = max_m, nrow = max_j))
+  colnames(pi_m_IGI) <- c(1:max_m)
+  
+  # ============
+  ##### Start of computation time counter
+  tic("IGI")
   
   # ============
   # Job Assignment
-  # ============   
+  # ============
   
+  # unassigned jobs j_left that still have to be scheduled, auxiliary job set aux_j
+  aux_j <- array(1:max_j)
+  j_left <- aux_j
+  
+  # number of required tools per job sum_t[j], required for initial loading
   sum_t <- array()
-  # only jobs that still have to be scheduled
-  left_j <- array(1:max_j)
-  j_left <- left_j
-  for (i in left_j) {
-    sum_t[i] <- sum(jt_matrix[,i])
+  for (i in aux_j) {
+    sum_t[i] <- sum(jt_matrix[, i])
   }
   remove(i)
-
-  while (sum(j_left)>0){
+  
+  # while still jobs to process
+  while (sum(j_left) > 0) {
     # select suitable machines
     # set all machines to unsuitable
     poss_m <- list()
     poss_m[1:max_m] <- F
     
-    # states which machine is free
-    for(job in j_left){
-      for (machine in 1:max_m){
-        if (cap_m[machine] >= sum(matrix[,job]))
-          poss_m[machine] <- T
+    # if job still possible (tool constraint) set machine to suitable
+    for (job in j_left) {
+      for (machine in 1:max_m) {
+        if (cap_m[machine] >= sum(matrix[, job]))
+          poss_m[machine] = T
       }
     }
     remove(job)
     remove(machine)
     
     # capacity of selected machine must be large enough to process left jobs and at best with minimum artificial completion time
-    free_m <- which(poss_m==T)
-    # states which machine(s) is free and suitable    
-    # !!!!!!!!!!! Achtung bisher Fehler !!!!!
-    free_m <- which(f[]==Reduce(min,f[free_m]))
+    free_m <- which(poss_m == T)
+    # states which machine(s) is free and suitable
+    free_m <- which(f[] == Reduce(min, f[free_m]))
     # if there are multiple free machines, randomly select one
-    free_m <- resamp(free_m,1)
-    # only for the jobs being processed on the free machine
-    df_part <- p_m_gi[free_m]
-    # first job is the job with maximum number of tools required
-    if (f[free_m]==0) {
+    free_m <- resamp(free_m, 1)
+    
+    # if job is the first one on that machine (no tool switching required)
+    if (f[free_m] == 0) {
+      # prepare tool sums (remove NAs)
       sum_t[is.na(sum_t)] <- 0
+      # select the job j_fit with maximum number of required tools and which is not violating capacity restrictions
+      # fitting jobs
       j_fit <- list()
-      
-      for (job in j_left){
-      j_fit[[job]] <- which(sum(matrix[,job]) <= cap_m[free_m])}
+      for (job in j_left) {
+        j_fit[[job]] <- which(sum(matrix[, job]) <= cap_m[free_m])
+      }
       remove(job)
-      
-      for (job in 1:length(j_fit)){
+      # remove unfitting / already assigned jobs (NAs)
+      for (job in 1:length(j_fit)) {
         j_fit[[job]] <- sum(j_fit[[job]])
       }
       remove(job)
+      j_fit <- which(j_fit == 1)
       
-      j_fit <- which(j_fit==1)
       # select the fitting jobs that require the highest number of tools
-      j_tmaxs <- j_fit[which(sum_t[j_fit]==max(sum_t[j_fit]))]
+      j_tmaxs <- j_fit[which(sum_t[j_fit] == max(sum_t[j_fit]))]
       # if there are multiple jobs with the same tmax, randomly select one
-      j_tmax <- resamp(j_tmaxs,1)
-      # assign that job to a free machine in postion length +1
-      pi_m_GI[(length(pi_m_GI[,free_m][!is.na(pi_m_GI[,free_m])])+1),free_m] <- j_tmax
+      j_tmax <- resamp(j_tmaxs, 1)
+      # assign that job to the free machine and in postion length +1
+      pi_m_IGI[(length(pi_m_IGI[, free_m][!is.na(pi_m_IGI[, free_m])]) +
+                  1), free_m] <- j_tmax
       # update completion time of that job on machine m
-      f[free_m] <- f[free_m]+p_m[[free_m]][j_tmax]
+      f[free_m] <- f[free_m] + p_m[[free_m]][j_tmax]
       # remove job from data frame
-      left_j[j_tmax] <- NA
-      jt_matrix_new <- jt_matrix_new[,-which(colnames(jt_matrix_new) == j_tmax)]
+      aux_j[j_tmax] <- NA
+      jt_matrix_new <-
+        jt_matrix_new[, -which(colnames(jt_matrix_new) == j_tmax)]
       sum_t[j_tmax] <- 0
-      # otherwise select fitting job that has the highest number of tools in common with the previous job
-    } else {
-      sum_intersections <- array()
-      j_fit <- list()
       
-      for (job in j_left){
-        j_fit[[job]] <- which(sum(matrix[,job]) <= cap_m[free_m])
+      # if the job is not the first job, select fitting job that has the highest number of tools in common with the previous job
+    } else {
+      # number of intersecting tools
+      sum_intersections <- array()
+      # select the job j_fit with maximum number of required tools and which is not violating capacity restrictions
+      # fitting jobs
+      j_fit <- list()
+      for (job in j_left) {
+        j_fit[[job]] <- which(sum(matrix[, job]) <= cap_m[free_m])
       }
       remove(job)
-      
-      for (job in 1:length(j_fit)){
+      # remove unfitting / already assigned jobs (NAs)
+      for (job in 1:length(j_fit)) {
         j_fit[[job]] <- sum(j_fit[[job]])
       }
       remove(job)
+      j_fit <- which(j_fit == 1)
       
-      j_fit <- which(j_fit==1)
       #if there are more than 1 jobs left
-        if(length(j_fit)>1){
+      if (length(j_fit) > 1) {
         #number of jobs already assigned
-        n <- length(which(!is.na(pi_m_GI[,free_m])))
-
-        for (k in which(left_j != is.na(left_j))){
-          sum_intersections[k] <- length(which((jt_matrix[,pi_m_GI[n,free_m]]+jt_matrix[,k])=="2"))
-          # if there are multiple jobs with the same tmax, select first job
+        n <- length(which(!is.na(pi_m_IGI[, free_m])))
+        for (k in which(aux_j != is.na(aux_j))) {
+          sum_intersections[k] <-
+            length(which((jt_matrix[, pi_m_IGI[n, free_m]] + jt_matrix[, k]) == "2"))
         }
-        fu <- which(sum_intersections >=0)
-        fu <- intersect(j_fit,fu)
+        # jobs with tool intersections
+        jobs_intersect <- which(sum_intersections >= 0)
+        jobs_intersect <- intersect(j_fit, jobs_intersect)
         # select fitting job with the maximum number of intersections
-        j_tmaxs <- j_fit[which(sum_intersections[fu]==max(sum_intersections[fu]))]
-        j_tmax <- resamp(j_tmaxs,1)
-        
-        ts_approx <- length(which((jt_matrix[,j_tmax]-jt_matrix[,n])=="-1"))
+        j_tmaxs <-
+          j_fit[which(sum_intersections[jobs_intersect] == max(sum_intersections[jobs_intersect]))]
+        # if there are multiple jobs with the same number of intersections, randomly select one
+        j_tmax <- resamp(j_tmaxs, 1)
+        ts_approx <-
+          length(which((jt_matrix[, j_tmax] - jt_matrix[, n]) == "-1"))
         # assign that job to a free machine in postion length +1
-        pi_m_GI[(length(pi_m_GI[,free_m][!is.na(pi_m_GI[,free_m])])+1),free_m]=j_tmax
+        pi_m_IGI[(length(pi_m_IGI[, free_m][!is.na(pi_m_IGI[, free_m])]) +
+                    1), free_m] = j_tmax
         # update completion time of that job on machine m
-        if(ts_approx > 0){
-          f[free_m] <- f[free_m]+p_m[[free_m]][j_tmax] + (sw_m[[free_m]][1]*ts_approx)
+        if (ts_approx > 0) {
+          f[free_m] <-
+            f[free_m] + p_m[[free_m]][j_tmax] + (sw_m[[free_m]][1] * ts_approx)
         }
-        if(ts_approx == 0){
-          f[free_m] <- f[free_m]+p_m[[free_m]][j_tmax]
+        if (ts_approx == 0) {
+          f[free_m] <- f[free_m] + p_m[[free_m]][j_tmax]
         }
         # remove job from data frame
-        left_j[j_tmax] <- NA
-        jt_matrix_new <- jt_matrix_new[,-which(colnames(jt_matrix_new) == j_tmax)]
+        aux_j[j_tmax] <- NA
+        jt_matrix_new <-
+          jt_matrix_new[,-which(colnames(jt_matrix_new) == j_tmax)]
         
         #if there is only 1 job left
-      } else if (length(j_fit)==1){
-        # last job to be sequenced on free machine 
+      } else if (length(j_fit) == 1) {
+        # last job to be sequenced on free machine
         j_tmax <- j_fit
-        pi_m_GI[(length(pi_m_GI[,free_m][!is.na(pi_m_GI[,free_m])])+1),free_m]=j_tmax
-        left_j[j_tmax]=NA
+        pi_m_IGI[(length(pi_m_IGI[, free_m][!is.na(pi_m_IGI[, free_m])]) +
+                    1), free_m] = j_tmax
+        aux_j[j_tmax] = NA
       }
     }
     remove(free_m)
-    j_left <- which(!is.na(left_j))
-  } 
+    j_left <- which(!is.na(aux_j))
+  }
   remove(k)
   
   ##############################################
   
-  #### Job Sequence - Solution ####
+  # ============
+  # Job Sequence - Solution
+  # ============
   
-  # print sequence on each machine without NA  
-  l_GI <- list()
-  for (m in 1:max_m){
-    l_GI[[m]] <- (pi_m_GI[,m][!is.na(pi_m_GI[,m])])
+  # final sequence on each machine without NAs
+  l_IGI <- list()
+  for (m in 1:max_m) {
+    l_IGI[[m]] <- (pi_m_IGI[, m][!is.na(pi_m_IGI[, m])])
   }
   remove(m)
   
@@ -262,122 +251,176 @@ for (instance in 1:length(data.list)){
   # Tool Loading and keep tool needed soones (KTNS)
   # ========================================
   
-  # sequence of unique tools that are still required
+  ### initialization of lists requried for KTNS
+  
+  # list of UNIQUE tools that are still required
   t_req_m <- list()
   for (m in 1:max_m) {
-    if(length(l_GI[[m]])==1){
-      t_req_m[[m]] <- unlist(req_t[l_GI[[m]][1]])
-      t_req_m[[m]] <- append(t_req_m[[m]],setdiff(c(1:max_t),t_req_m[[m]]))
-    }
-    else{
-      t_req_m[[m]] <- unlist(union(NULL,as.vector(unlist(req_t[l_GI[[m]][-1]]))))
-      if(length(t_req_m[[m]]) < cap_m[[m]]){
-        t_req_m[[m]] <- append(t_req_m[[m]],setdiff(c(1:max_t),t_req_m[[m]]))
+    # if the machine [[m]] is used by at least one job
+    if (sum(l_IGI[[m]]) > 0) {
+      # if there is only one job on that machine
+      if (length(l_IGI[[m]]) == 1) {
+        # add the required tools to the tool list
+        t_req_m[[m]] <- unlist(req_t[l_IGI[[m]][1]])
+        # add other possible tools
+        # it is assumed that the tool magazine is always full
+        # this assumption was made based on a real-world example
+        # this does neither hinder nor influence the correct output of the construction heuristic or the ILS
+        t_req_m[[m]] <-
+          append(t_req_m[[m]], setdiff(c(1:max_t), t_req_m[[m]]))
       }
+      else{
+        # append the required tools without the tools for the first job
+        # the tool for the first job will be assigned anyways in step ### initial loading 
+        t_req_m[[m]] <-
+          unlist(union(NULL, as.vector(unlist(req_t[l_IGI[[m]][-1]]))))
+        if (length(t_req_m[[m]]) < cap_m[[m]]) {
+          t_req_m[[m]] <-
+            append(t_req_m[[m]], setdiff(c(1:max_t), t_req_m[[m]]))
+        }
+      }
+    }
+    # if there is no job on that machine
+    else{
+      warning(paste0("No jobs assigned to machine ",m,"!"))
+      t_req_m[[m]] <- NA
     }
   }
   remove(m)
   
-  # sequence of all tools that are still required @all_t_req_m[[m]]
-  # because it can happen that a previously loaded tool had to be removed
+  # list of ALL tools that are still required
   all_t_req_m <- list()
   for (m in 1:max_m) {
-    all_t_req_m[[m]] <- unlist(req_t[l_GI[[m]][-1]])   # without first jobs
+    all_t_req_m[[m]] <- unlist(req_t[l_IGI[[m]][-1]])
   }
   remove(m)
   
-  ### auxiliary parameters for the loading
-  load_t <- req_t       # tool loading @load_t
-  aux_req <- t_req_m    # unique tools required @aux_req[[m]]
-  aux_all_req <- all_t_req_m    # all tools required @aux_all_req[[m]]
+  # auxiliary lists for the loading
+  load_t <- req_t
+  aux_req <- t_req_m
+  aux_all_req <- all_t_req_m
   
-  ### important variables
-  ct <- list()    # completion time of job j @ct[j]
-  ts_j <- array(0,dim <- max_j)    # number of required tools not in the magazine @ts_j[j]
+  ### completion time of job j
+  ct <- list()
+  # number of tools that are required and not in the magazine
+  ts_j <- array(dim <- max_j)
   
   ### initial loading (first jobs)
+  # at first, the initial loading for the first job is defined, which makes future tool comparisons easier
+  # for all machines..
   for (m in 1:max_m) {
-    active_j <- l_GI[[m]][1]   # active job active_j
-    
-    # if no free slot
-    if (length(req_t[[active_j]]) == cap_m[[m]]) {
-      ct[active_j] <- p_m[[m]][active_j]
-      # if free slot available
-    } else if (length((req_t[[active_j]])) < cap_m[[m]]) {
-      hu <- match(req_t[[active_j]],aux_req[[m]])        # tools still required for other jobs
-      hu <- hu[!is.na(hu)]
-      if (sum(hu) > 0) {
-        aux_req[[m]] <- aux_req[[m]][-hu]
-      }
-      for (free_slot in (length(req_t[[active_j]])+1):cap_m[[m]]) {
-        # put next tool in free slot that is required earliest 
-        # but only if it is not in use already by first job
-        load_t[[active_j]][free_slot] <- aux_req[[m]][1]
-        # remove not inserted
-        aux_req[[m]] <- aux_req[[m]][-1]
+    # ..with jobs assigned
+    if (sum(t_req_m[[m]]) > 0) {
+      active_j <- l_IGI[[m]][1]
+      # no tool switches for the first job
+      ts_j[active_j] <- 0
+      # if number of required tools equal to tool magazine capacity
+      if (length(req_t[[active_j]]) == cap_m[[m]]) {
+        # update completion time
         ct[active_j] <- p_m[[m]][active_j]
+        
+        # if free slot available
+      } else if (length((req_t[[active_j]])) < cap_m[[m]]) {
+        
+        # tool position in the array of the tools in common with future required tools
+        tool_pos <- match(req_t[[active_j]], aux_req[[m]])
+        # without tools, never used again
+        tool_pos <- tool_pos[!is.na(tool_pos)]
+        # remove the tools already in the magazine
+        if (sum(tool_pos) > 0) {
+          aux_req[[m]] <- aux_req[[m]][-tool_pos]
+        }
+        remove(tool_pos)
+        # add tool required the soonest in the free slot
+        for (free_slot in (length(req_t[[active_j]]) + 1):cap_m[[m]]) {
+          # put next tool in free slot that is required earliest..
+          # ..but only if it is not already used by first job
+          load_t[[active_j]][free_slot] <- aux_req[[m]][1]
+          # remove not inserted // update auxiliary required tool list
+          aux_req[[m]] <- aux_req[[m]][-1]
+          # update completion time
+          ct[active_j] <- p_m[[m]][active_j]
+        }
+        remove(free_slot)
       }
     }
+    remove(active_j)
   }
+  remove(m)
   
-  remove(hu,m,active_j,free_slot)
-  
-  ### tool optimization 
+  ### tool optimization for remaining jobs
   for (m in 1:max_m) {
-    if (length(l_GI[[m]]) == 1) {
-      active_j <- l_GI[[m]][1]
+    # if there is only one job in the sequence on machine m
+    if (length(l_IGI[[m]]) == 1) {
+      active_j <- l_IGI[[m]][1]
       ct[active_j] <- p_m[[m]][active_j]
     } else {
-      for (active_j_pos in 2:length(l_GI[[m]])) {
-        active_j <- l_GI[[m]][active_j_pos]
-        previous_j <- l_GI[[m]][active_j_pos-1]
-        not_match <- which(!is.na(match(req_t[[active_j]],load_t[[previous_j]]))==F)
-        yes_match <- which(!is.na(match(req_t[[active_j]],load_t[[previous_j]]))==T)
+      for (active_j_pos in 2:length(l_IGI[[m]])) {
+        active_j <- l_IGI[[m]][active_j_pos]
+        previous_j <- l_IGI[[m]][active_j_pos - 1]
+        # new tools required
+        not_match <-
+          which(!is.na(match(req_t[[active_j]], load_t[[previous_j]])) == F)
+        # required tools that are already loaded
+        yes_match <-
+          which(!is.na(match(req_t[[active_j]], load_t[[previous_j]])) == T)
+        # at most required tool switches
+        # !!!
         ts_j[active_j] <- length(not_match)
         # if no tools are to be replaced because required tools are already loaded
         if (length(yes_match) == length(req_t[[active_j]])) {
           load_t[[active_j]] <- load_t[[previous_j]]
-          aux_all_req[[m]] <- aux_all_req[[m]][-(1:length(req_t[[active_j]]))]
+          aux_all_req[[m]] <-
+            aux_all_req[[m]][-(1:length(req_t[[active_j]]))]
           ct[active_j] <- ct[previous_j] + p_m[[m]][active_j]
         }
         # if tools need to be replaced
         else if (length(yes_match) < length(req_t[[active_j]])) {
-          # if all tools need to be replaced 
+          # if all tools need to be replaced
           if (ts_j[active_j] == cap_m[[m]]) {
             load_t[[active_j]] <- req_t[[active_j]]
-            aux_all_req[[m]] <- aux_all_req[[m]][-(1:length(req_t[[active_j]]))]
-            ct[active_j] <- ct[previous_j]+p_m[[m]][active_j]+ts_j[active_j]*sw_m[[m]][1]
+            aux_all_req[[m]] <-
+              aux_all_req[[m]][-(1:length(req_t[[active_j]]))]
+            ct[active_j] <-
+              ct[previous_j] + p_m[[m]][active_j] + ts_j[active_j] * sw_m[[m]][1]
           }
           # if any tools need to be replaced (less than magazine capacity)
           else if (ts_j[active_j] < cap_m[[m]]) {
             load_t[[active_j]] <- req_t[[active_j]]
-            aux_all_req[[m]] <- aux_all_req[[m]][-(1:length(req_t[[active_j]]))]
+            aux_all_req[[m]] <-
+              aux_all_req[[m]][-(1:length(req_t[[active_j]]))]
             # which tools are already loaded and later required
-            inta <- intersect(load_t[[previous_j]],aux_all_req[[m]])
+            inta <-
+              intersect(load_t[[previous_j]], aux_all_req[[m]])
             # which tools can theoretically be kept
-            inta <- setdiff(inta,load_t[[active_j]])
-            
+            inta <- setdiff(inta, load_t[[active_j]])
             # if there are more free slots than tools required in the future and not in magazine
-            if ((cap_m[[m]]-length(req_t[[active_j]])) > length(inta)) {
-              # replace the free slots with tools needed soonest (and not in the magazin) 
-              load_t[[active_j]] <- append(load_t[[active_j]],inta)
+            if ((cap_m[[m]] - length(req_t[[active_j]])) > length(inta)) {
+              # replace the free slots with tools needed soonest (and not in the magazin)
+              load_t[[active_j]] <- append(load_t[[active_j]], inta)
               # randomly keep old tools until magazin is full
-              old_t <- setdiff(load_t[[previous_j]],union(load_t[[active_j]],aux_all_req[[m]]))
-              load_t[[active_j]] <- append(load_t[[active_j]],old_t[1:(cap_m[[m]]-length(load_t[[active_j]]))])
-              ct[active_j] <- ct[previous_j]+p_m[[m]][active_j] + ts_j[active_j]*sw_m[[m]][1]
+              old_t <-
+                setdiff(load_t[[previous_j]], union(load_t[[active_j]], aux_all_req[[m]]))
+              load_t[[active_j]] <-
+                append(load_t[[active_j]], old_t[1:(cap_m[[m]] - length(load_t[[active_j]]))])
+              ct[active_j] <-
+                ct[previous_j] + p_m[[m]][active_j] + ts_j[active_j] * sw_m[[m]][1]
               remove(old_t)
             }
             # if job needs exactly cap tool
-            else if ((cap_m[[m]]-length(req_t[[active_j]])) == 0 ) {
+            else if ((cap_m[[m]] - length(req_t[[active_j]])) == 0) {
               load_t[[active_j]] = req_t[[active_j]]
               ct[active_j] = ct[previous_j] + p_m[[m]][active_j] + ts_j[active_j] * sw_m[[m]][1]
               
-            } 
-            # if there are less free slots than tools required in future and not in magazine 
-            else if ((cap_m[[m]]-length(req_t[[active_j]])) <= length(inta) & (cap_m[[m]]-length(req_t[[active_j]])) > 0) {
+            }
+            # if there are less free slots than tools required in future and not in magazine
+            else if ((cap_m[[m]] - length(req_t[[active_j]])) <= length(inta) &
+                     (cap_m[[m]] - length(req_t[[active_j]])) > 0) {
               # replace the free slots with tools needed soonest (and not in the magazin)
-              load_t[[active_j]] <- append(load_t[[active_j]],inta[1:(cap_m[[m]] - length(req_t[[active_j]]))])
-              ct[active_j] <- ct[previous_j] + p_m[[m]][active_j] + ts_j[active_j] * sw_m[[m]][1]
+              load_t[[active_j]] <-
+                append(load_t[[active_j]], inta[1:(cap_m[[m]] - length(req_t[[active_j]]))])
+              ct[active_j] <-
+                ct[previous_j] + p_m[[m]][active_j] + ts_j[active_j] * sw_m[[m]][1]
             }
           }
         }
@@ -389,8 +432,8 @@ for (instance in 1:length(data.list)){
   
   # ========================================
   
-  toc(log = T,quiet = T)
-  c_time <- tic.log(format=T)
+  toc(log = T, quiet = T)
+  c_time <- tic.log(format = T)
   tic.clear()
   tic.clearlog()
   
@@ -401,31 +444,39 @@ for (instance in 1:length(data.list)){
   ### number of tool switches
   switch <- sum(ts_j[!is.na(ts_j)])
   ### makespan
-  fmax <- Reduce(max,ct)
+  fmax <- Reduce(max, ct)
   ### total flow time
-  tft <- Reduce("+",ct)
+  tft <- Reduce("+", ct)
   ### job assignment
-  seq <- l_GI
+  seq <- array()
+  seq[1:max_m] <- l_IGI[1:max_m]
   seq <- capture.output(cat(paste0(strwrap(seq))))
-  ### tool loading 
-  loads <- load_t
+  ### tool loading
+  loads <- array()
+  loads[1:max_j] <- load_t[1:max_j]
   loads <- capture.output(cat(paste0(strwrap(loads))))
-
-  # write solution to file
-
-  mat=as.matrix(rbind(switch,tft,fmax,c_time[1],seq,loads))
-  f3 = paste0("./IGI",instance,".csv",sep="")
-  if (file.exists(f3)==T){
+  
+  # write solution of the construction heuristic (IGI) to file
+  setwd("results/example_results/")
+  mat <- as.matrix(rbind(switch, tft, fmax, c_time[1], seq, loads))
+  f_igi <- paste0("./IGI", instance, ".csv", sep = "")
+  if (file.exists(f_igi) == T) {
     print("file already exists")
   }
-  if (file.exists(f3)==F){
-    write.table(mat,paste("./IGI",instance,".csv",sep = ""),sep=",",row.names = T,col.names = F)
+  if (file.exists(f_igi) == F) {
+    write.table(
+      mat,
+      paste("./IGI", instance, ".csv", sep = ""),
+      sep = ",",
+      row.names = T,
+      col.names = F
+    )
   }
-  
+  setwd("~/GitHub/ILS_SSP-NPM/Heuristics")
   # remove all variables and parameters except instances and instance counter
-  rm(list=ls()[! ls() %in% c("data.list","csv_files","instance","resamp")])
-  }
+  rm(list = ls()[!ls() %in% c("data.list", "csv_files", "instance", "resamp")])
+}
 
-
-
-  
+# ===========================================
+################ END IGI ####################
+# ===========================================
