@@ -38,7 +38,6 @@ if(dir.exists(paths = "~/GitHub/ILS_SSP-NPM/Heuristics") == T){
 source("preparation.R",echo = F)
 
 # run  all construction heuristics (IEACT, IGI, MSR)
-source("constr_heur.R",echo = F)
 # Note: The output of the construction heuristic %heuristic% applied to each %instance% 
 #       will be stored in a separate file: %heuristic%%instance%.csv. 
 #       The file is required for running the ILS.
@@ -52,4 +51,6 @@ source("construction_heurstics/MSR.R",echo = F)
 # run iterated local search
 source("ils.R",echo = F)
 # Note: The ILS heuristic applied to each %instance% generated two output files!
-#       File bks_%heuristic%
+# Note: the Local Search can be run individually
+source("local_search/LS2.R")
+

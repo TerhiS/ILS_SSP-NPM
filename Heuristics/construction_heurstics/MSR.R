@@ -34,7 +34,7 @@ for (instance in 1:length(data.list)) {
   
   #### retrieve input parameters from data frame
   df <- as.data.frame(data.list[[instance]])
-  colnames(df) <- c(1:length(df[1,]))     # Columns
+  colnames(df) <- c(1:length(df[1, ]))     # Columns
   row.names(df) <- c(1:length(df[, 1]))    # Rows
   
   #### Initialization of parameters & sets (jobs, machines, tools, req_tools, capacity)
@@ -89,7 +89,17 @@ for (instance in 1:length(data.list)) {
   ########## MSR algorithm ############
   # =====================================
   
+  # initialisation job sequence pi_m on machine m
+  pi_m_MSR <- data.frame(matrix(ncol = max_m, nrow = max_j))
+  colnames(pi_m_MSR) <- c(1:max_m)
+  
+  # ============
+  ##### Start of computation time counter
   tic("MSR")
+  
+  # ============
+  # Job Assignment
+  # ============
   
   for (iteration in 1:i) {
     # shuffle the possible sequence randomly
@@ -118,6 +128,13 @@ for (instance in 1:length(data.list)) {
     remove(j)
     remove(m_pos)
     
+    ##############################################
+    
+    # ============
+    # Job Sequence - Solution
+    # ============
+    
+    # final sequence on each machine without NAs
     l_MSR <- list()
     for (m in 1:max_m) {
       l_MSR[[m]] <- (pi_m_MSR[, m][!is.na(pi_m_MSR[, m])])
@@ -321,7 +338,7 @@ for (instance in 1:length(data.list)) {
     tft <- Reduce("+", ct)
     ### job assignment
     seq <- array()
-    seq[1:max_m] <- l_rand[1:max_m]
+    seq[1:max_m] <- l_MSR[1:max_m]
     seq <- capture.output(cat(paste0(strwrap(seq))))
     ### tool loading
     loads <- array()
