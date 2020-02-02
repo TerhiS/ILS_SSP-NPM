@@ -31,6 +31,8 @@ resamp <- function(x,...){if(length(x)==1) x else sample(x,...)}
 # default folder: "example_instance/"
 # if required change to "SSP-NPM-I/" or "SSP-NPM-II/"
 setwd("Instances/example_instance")
+#setwd("Instances/SSP-NPM-I/")
+#setwd("Instances/SSP-NPM-II/")
 csv_files <- list.files(pattern = 'ins*',all.files = T,full.names = T)
 csv_files <- naturalsort(csv_files)
 data.list <- lapply(csv_files,read.table,sep=";",header=F)
