@@ -1,0 +1,174 @@
+* ==================
+* A position-based mixed integer linear program for the
+* job sequencing and tool switching problem with non-identical parallel machines
+* ==================
+
+***
+* author: D. Calmels
+***
+
+* ==================
+* Definition of indices, sets and parameters of a sample instance
+* ==================
+
+*** Include data set that contains
+* machine set @index(m)
+* job set @index(j), alias (i,j,r)
+* tool set @index(t)
+* time set @index(k)
+* tools required for job j @set sig(j,t)
+* jobs that require tool t @set tau(t,j)
+* tool magazine capacity @parameter c(m)
+* procssing time of job j on machine m @parameter p(j,m)
+* tool switching time per machine @parameter sw(m)
+***
+
+***
+* Include for example
+* sample instance: output1.txt
+* replace file path
+* $include "file path:\...\"input1.txt
+;
+
+*** Additional sets and parameters for position-based formulation
+* job aliases
+alias(i,j)
+alias(r,j)
+;
+
+Parameter
+g large constant;
+g = sum(j,smax(m,p(j,m)))+(card(j)-1)*smax(m,(c(m)*sw(m)));
+
+* ==================
+* Definition of variables
+* ==================
+
+Variables
+* binary variables
+x(j,r,m)         if job j is processed in the r^th position on machine m
+v(t,r,m)         if tool t is present in machine m during the processing of the r^th job
+w(t,r,m)         if tool t is inserted in machine m exactly before the processing of the r^th job
+
+* continuous variables
+f(j,r,m)         denotes the completion of job j processed in the r^th position on machine m
+
+*objective function values
+tft              total flowtime
+fmax             makespan
+ts               total number of tool switches
+;
+
+Binary Variables
+x,v,w;
+
+Positive Variables
+f;
+
+* ==================
+* Definition of equations
+* ==================
+e1(j)
+e2(r,m)
+e3(r,m)
+e4(t,r,m)
+e5(r,m)
+e6(t,r,m)
+e7(j,m)
+e8(j,r,m)
+*e9(m)
+*bound
+
+makespan(j,r,m)
+tft
+ts
+;
+
+e1(j)..
+sum((r,m),x(j,r,m)) =e= 1;
+
+e2(r,m)..
+sum(j,x(j,r,m)) =l= 1;
+
+e3(r,m)$(ord(r)>1)..
+sum(j,x(j,r,m)) =l= sum(j,x(j,r-1,m));
+
+e4(t,r,m)..
+sum(j$tau(t,j),x(j,r,m)) =l= v(t,r,m);
+
+e5(r,m)..
+sum(t,v(t,r,m)) =l= c(m);
+
+e6(t,r,m)$(ord(r)>1)..
+v(t,r,m)-v(t,r-1,m) =l= w(t,r,m);
+
+e7(j,m)..
+f(j,'1',m) =e= p(j,m)*x(j,'1',m);
+
+e8(j,r,m)$(ord(r)>1)..
+f(j,r,m) =g= sum(i$(ord(i)<>ord(j)),f(i,r-1,m)) + p(j,m)*x(j,r,m) + sw(m) * sum(t,w(t,r,m)) - g*(1-x(j,r,m));
+
+*e9(m)..
+*sum(t,w(t,'1',m)) =e= 0;
+
+makespan(j,r,m)..
+z1 =g= f(j,r,m);
+
+tft..
+z2 =e= sum((j,r,m),f(j,r,m));
+
+ts..
+z3 =g= sum((t,r,m),w(t,r,m));
+*bound..
+*z1 =l= 69;
+
+Model pb /all/;
+pb.reslim=600;
+option threads=12;
+option optcr=0;
+$onecho > cplex.opt
+lpmethod 4
+$offecho
+
+*$ontext
+Solve pb using MIP minimizing z1;
+
+Variable
+time1     CPU used
+gap1     relative gap best possible
+;
+
+time1.l=pb.resusd;
+*gap1.l=(pb.objVal-pb.objEst)/pb.objVal;
+
+execute_unload "results_last.gdx" z1.l time1.l
+execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=z1.l rng=Fmax!b160'
+execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=time1.l rng=Fmax!c160'
+*execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=gap1.l rng=Fmax!d1'
+
+
+Solve pb using MIP minimizing z2;
+
+Variable
+time2     CPU used
+*gap2     relative gap best possible
+;
+time2.l=pb.resusd;
+*gap2.l=(pb.objVal-pb.objEst)/pb.objVal;
+*z2.up = 738;
+execute_unload "results_last.gdx" z2.l time2.l
+execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=z2.l rng=TFT!b160'
+execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=time2.l rng=TFT!c160'
+*execute 'gdxxrw.exe  results_pob.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=gap2.l rng=TFT!d1'
+
+*$offtext
+Solve pb using MIP minimizing z3;
+
+Variable
+time3     CPU used
+;
+time3.l=pb.resusd;
+
+execute_unload "results_last.gdx" z3.l time3.l
+execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=z3.l rng=TS!b160'
+execute 'gdxxrw.exe  results_last.gdx o=E:\Dorothea\Las_Paper\results_last.xlsx var=time3.l rng=TS!c160'
