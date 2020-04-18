@@ -46,7 +46,8 @@ Each output file is characterized by the *%method%* (IEACT / IGI /  MSR / LS / I
 The output file of the ILS is additionally characterized by 
 - the *%perturbation%* scheme (combi / prob_spec / random), 
 - the *%objective%* considered (makespan / flowtime / switches),
-- the parameter values of *%beta%* (b) and *%gamma%* (g). 
+- the parameter values of *%beta%* (b) and *%gamma%* (g).
+ 
 csv-file separator: ";"
 
 1) __%construction_method%__*%instance%*__.csv__: results of the construction heuristics (IEACT, IGI, MSR)
