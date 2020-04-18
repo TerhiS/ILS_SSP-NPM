@@ -4,6 +4,7 @@ An Iterated Local Search (ILS) heuristic and its components are provided [here](
 The ILS consists of the [construction heuristics](https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Heuristics/construction_heuristics) to build the initial solution, 
 the [local search](https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Heuristics/local_search) to obtain the local optimum 
 and the perturbation concepts of the [iterated local search](https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Heuristics/local_search) in order to overcome local optima. 
+Three different objectives are considered, namely minimizing the makespan, the total flowtime, the total number of tool switches. 
 
 ## Authors
 [**D. Calmels**](https://www.researchgate.net/profile/Dorothea_Calmels)
@@ -13,16 +14,17 @@ The problem instances and an explanation are provided [here](https://github.com/
 ## Content
 ### Construction Heuristic
 The [construction heuristics](https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Heuristics/construction_heuristics) iteratively assign jobs to machines. 
-In each iteration, the job with the minimum artificial completion time is selected, calculated as
-```
-processing time of the selected job + (tool switching time * tool set difference of the selected job and the previous job)
-```
+Three different construction heuristics are provided: 
+- IEACT
+- IGI
+- MSR
+
 ### Iterated Local Search
 The [iterated local search](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/iterated_local_search/ILS.R) consists of a local search (the stand-alone local search is provided [here](https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Heuristics/local_search) )
 based on job swaps as well as three different perturbation schemes: 
-- problem-specific perturbation: re-assigns jobs in unfavourable positions to the best position on another machine, 
-- random perturbation: re-assigns randomly picked jobs to a random position on another machine, 
-- combined perturbation: a combination of the problem-specific perturbation and the random perturbation. 
+- problem-specific perturbation (prob_spec): re-assigns jobs in unfavourable positions to the best position on another machine, 
+- random perturbation (random): re-assigns randomly picked jobs to a random position on another machine, 
+- combined perturbation (combi): a combination of the problem-specific perturbation and the random perturbation. 
 
 ## Usage Description
 The file [main.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/main.R) provides the main body of the ILS. 
@@ -31,20 +33,20 @@ The [main.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/main.R
 It consists of: 
 - [preparation.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/preparation.R)
 - [construction heuristics](https://github.com/TerhiS/ILS_SSP-NPM/tree/master/Heuristics/construction_heuristics): 
-	-- [IEACT.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/construction_heuristics/IEACT.R)
-	-- [IGI.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/construction_heuristics/IGI.R)
-	-- [MSR.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/construction_heuristics/MSR.R)
-- [ils.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/iterated_local_search/ILS.R)
+	- [IEACT.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/construction_heuristics/IEACT.R)
+	- [IGI.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/construction_heuristics/IGI.R)
+	- [MSR.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/construction_heuristics/MSR.R)
+- [ILS.R](https://github.com/TerhiS/ILS_SSP-NPM/blob/master/Heuristics/iterated_local_search/ILS.R)
 
-It generates several output files based on the *%perturbation%* (problem-specific / random / combined), the %objective%* (makespan / total flowtime / tool switches) and *%instance%*-identifier. 
+It generates several output files based on the *%perturbation%* (combi / prob_spec / random), the %objective%* (makespan / flowtime / switches) and *%instance%*-identifier. 
 
 ## Output
 The Algorithms generate several output files. (see the [example results](https://github.com/TerhiS/MIP_SSP-NPM/tree/master/Heuristics/results/example_results) )
-Each output file is characterized by the instance identifier (*%instance%*.R). 
-The output file of the ILS is additionally characterized by the iteration limit (*%iterations%*) as well as the objective considered (*%objective%*). 
+Each output file is characterized by the *%method%* (IEACT / IGI / MSR / LS / ILS) and the instance identifier (*%instance%*__.csv__). 
+The output file of the ILS is additionally characterized by the *%perturbation%* scheme (combi / prob_spec / random) as well as the *%objective%* considered (makespan / flowtime / switches). 
 Separator: ";"
 
-1) __CH__*%instance%*__.csv__: results of the construction heuristic 
+1) __%method%__*%instance%*__.csv__: results of the construction heuristic 
 2) __ILS__\_*%iterations%*\_*%objective%*_%instance%_**.csv**: results of the ILS
 3) __bks__\_*%objective%*_%instance%_**.csv**: best known results per iteration for a considered objective
 
