@@ -41,15 +41,14 @@ It consists of:
 It generates several output files based on the *%perturbation%* (combi / prob_spec / random), the %objective%* (makespan / flowtime / switches) and *%instance%*-identifier. 
 
 ## Output
-The Algorithms generate several output files. (see the [example results](https://github.com/TerhiS/MIP_SSP-NPM/tree/master/Heuristics/results/example_results) )
-Each output file is characterized by the *%method%* (IEACT / IGI /  MSR / LS / ILS) and the instance identifier (*%instance%*__.csv__). 
+The Algorithms generate several .csv output files. (see the [example results](https://github.com/TerhiS/MIP_SSP-NPM/tree/master/Heuristics/results/example_results) )
+Each output file is characterized by the *%method%* (IEACT / IGI /  MSR / LS / ILS) and the instance identifier (*%instance%*__.csv__). The csv-file separator is ";". 
 The output file of the ILS is additionally characterized by 
 - the *%perturbation%* scheme (combi / prob_spec / random), 
 - the *%objective%* considered (makespan / flowtime / switches),
 - the parameter values of *%beta%* (b) and *%gamma%* (g).
  
-csv-file separator: ";"
-
+Files: 
 1) __%construction_method%__*%instance%*__.csv__: results of the construction heuristics (IEACT, IGI, MSR)
 2) __LS__\_*%objective%*_%instance%_**.csv**: results of the stand-alone LS
 3) __ILS__\*%perturbation%*\b*%beta%*g*%gamma%*\_*%objective%*_%instance%_**.csv**: results of the ILS
