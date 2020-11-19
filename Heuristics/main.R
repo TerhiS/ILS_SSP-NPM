@@ -49,7 +49,7 @@ source("construction_heuristics/IGI.R",echo = F)
 source("construction_heuristics/MSR.R",echo = F)
 
 # run iterated local search
-source("iterated_local_search/ILS.R",echo = F)
+source("New_ILS.R",echo = F)
 # Note: The ILS heuristic applied to each %instance% generated two output files!
 # Note: the Local Search can be run individually
 source("local_search/LS.R")
