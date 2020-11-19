@@ -28,7 +28,6 @@
 * sample instance: output1.txt
 * replace file path
 * $include "file path:\...\"input1.txt
-$include C:\Users\Yoann\Documents\GAMS\output163.txt
 ;
 
 *** Additional sets and parameters for position-based formulation
@@ -132,7 +131,7 @@ Model pb /all/;
 * CPLEX Settings
 * ==================
 * time limit
-pb.reslim=3600;
+pb.reslim=600;
 * use all cores
 option threads=12;
 * other settings
@@ -146,7 +145,6 @@ $offecho
 * ==================
 Solve pb using MIP minimizing tft;
 
-$ontext
 * ==================
 * Results
 * ==================
@@ -194,7 +192,6 @@ Solve pb using MIP minimizing ts;
 Variable
 time3     CPU used
 ;
-$offtext
 time3.l=pb.resusd;
 
 * save the results in an excel-file 'file.xlsx' in the 'file_path'
