@@ -323,7 +323,7 @@ for (instance in 1:length(data.list)) {
           ConvertColonToVector(BestToolLoad)
         )))
       # result directory
-      setwd("../ILS/")
+      setwd("../iterated_local_search/")
       # Best solution per iteration file
       if (StopCriterion == "Iterations") {
         write.table(

@@ -33,8 +33,6 @@ numCores <- detectCores()
 registerDoParallel(numCores)
 
 ### functions
-# Import Results from Construction Heuristic
-source("New_Import_HeuristicResults.R",echo = F)
 
 # required function that includes sample of length one
 resamp <- function(x, ...) {
@@ -43,21 +41,6 @@ resamp <- function(x, ...) {
   else
     sample(x, ...)
 }
-# KTNS
-source("NewKTNS.R",echo = F)
-
-# computation of tool load and switches
-source("NewLoadingResults.R",echo = F)
-
-# Local Search
-source("New_Local_Search.R",echo = F)
-
-# Random Perturbation
-source("New_Random_Perturbation.R",echo = F)
-
-# Problem Specific Perturbation
-source("New_ProblemSpecific_Perturbation.R",echo = F)
-
 
 # Output preparation
 ConvertColonToVector <- function(myList) {
@@ -76,14 +59,33 @@ ConvertColonToVector <- function(myList) {
   return(myList)
 }
 
+# Import Results from Construction Heuristic
+source("New_Import_HeuristicResults.R",echo = F)
+
+# KTNS
+source("NewKTNS.R",echo = F)
+
+# computation of tool load and switches
+source("NewLoadingResults.R",echo = F)
+
+# Local Search
+source("New_Local_Search.R",echo = F)
+
+# Random Perturbation
+source("New_Random_Perturbation.R",echo = F)
+
+# Problem Specific Perturbation
+source("New_ProblemSpecific_Perturbation.R",echo = F)
+
 ### instances
 # data available on https://github.com/TerhiS/ILS_SSP-NPM/Heuristics/instances
 # note: there are two different data sets: SSP-NPM-I and SSP-NPM-II
 # default folder: "example_instance/"
 # if required change to "SSP-NPM-I/" or "SSP-NPM-II/"
-setwd("Instances/example_instance")
-#setwd("Instances/SSP-NPM-I/")
-#setwd("Instances/SSP-NPM-II/")
+ProblemSet <- readline(
+  prompt = "Enter Problem Set (SSP-NPM-I, SSP-NPM-II, example_instance): ")
+setwd(paste0("Instances/",ProblemSet))
+
 csv_files <-
   list.files(pattern = 'ins*',
              all.files = T,
