@@ -45,7 +45,7 @@ source("preparation.R",echo = F)
 #       Therefore, remove the "Read Input Data"-part in ILS.R and replace it with the output variables of constr_heur.R.
 # The construction heuristics can be run individually 
 source("construction_heuristics/New_IEACT.R",echo = F)
-source("construction_heuristics/IGI.R",echo = F)
+source("construction_heuristics/New_IGI.R",echo = F)
 source("construction_heuristics/MSR.R",echo = F)
 
 # run iterated local search
