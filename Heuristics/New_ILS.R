@@ -8,34 +8,40 @@
 # Objectives
 Objectives <- c("flowtime", "makespan", "switches")
 # Perturbation Strategies
-Strategies <- c("random", "problem-specific", "combined")
+Strategies <-
+  c("random", "problem-specific", "combined", "random-combined")
 ### Stopping Criteria
 StoppingCriteria <- c("Time", "Iterations")
-StopCriterion <- "Iterations"
+#StopCriterion <- "Iterations"
 StopCriterion <-
   readline(prompt = "Enter Stop Criterion (Time or Iterations): ")
 ## Maximum number of perturbation iterations
-MaxIterations <- 100
+#MaxIterations <- 100
 MaxIterations <-
   as.integer(readline(prompt = "Enter Maximum Number of Iterations: "))
 ## Maximum run time limit in seconds
-MaxTime <- 60
-MaxIterations <- as.integer(readline(prompt = "Enter Maximum Runtime Limit: "))
+#MaxTime <- 60
+MaxTime <-
+  as.integer(readline(prompt = "Enter Maximum Runtime Limit: "))
 # =======================================
 
 # for all instances
 for (instance in 1:length(data.list)) {
   # for all objectives
-  for (objective in c("flowtime", "makespan", "switches")) {
+  for (objective in c("flowtime",
+                      "makespan",
+                      "switches")) {
     # three perturbation strategies
-    for (strategy in c("random", "problem-specific", "combined")) {
+    for (strategy in c(#"random",
+      #"problem-specific",
+      "combined")) {
       # =================
       ### Initialisation
       # =================
       # All characteristics of the instance
       InstanceMatrix <- as.data.frame(data.list[[instance]])
       # Columns
-      colnames(InstanceMatrix) <- c(1:length(InstanceMatrix[1, ]))
+      colnames(InstanceMatrix) <- c(1:length(InstanceMatrix[1,]))
       # Rows
       row.names(InstanceMatrix) <- c(1:length(InstanceMatrix[, 1]))
       
@@ -62,7 +68,7 @@ for (instance in 1:length(data.list)) {
       
       # Processing Times per Machine and Job [m,j]
       ProcessingTimes <-
-        as.data.frame(InstanceMatrix[4:(4 + MaxMachines - 1),], row.names = c(1:MaxMachines))
+        as.data.frame(InstanceMatrix[4:(4 + MaxMachines - 1), ], row.names = c(1:MaxMachines))
       
       # Job-Tool-Matrix
       # Indicates the tools required per job
@@ -95,7 +101,8 @@ for (instance in 1:length(data.list)) {
       if (objective == "switches") {
         ConstructionHeuristic <- "IGI"
         Gamma <- 0.1
-        if (strategy == "combined") {
+        if (strategy == "combined" ||
+            strategy == "random-combined") {
           Beta <- 0.2
         } else {
           Beta <- 0.8
@@ -167,7 +174,8 @@ for (instance in 1:length(data.list)) {
         PerturbationOngoing <- F
         PerturbationCount <- PerturbationCount + 1
         
-        if (strategy == "combined") {
+        if (strategy == "combined" ||
+            strategy == "random-combined") {
           # if iteration improved
           if (Improved == T) {
             # Continue with Problem-Specific Perturbation
@@ -196,7 +204,12 @@ for (instance in 1:length(data.list)) {
           }
           ### if strategy is random
           if (PerturbationType == 0) {
-            PerturbedSequence <- RandomPerturbation(RetainedSequence, Beta)
+            if (strategy == "combined") {
+              PerturbedSequence <- RandomPerturbation(RetainedSequence, Beta)
+            } else {
+              PerturbedSequence <- RandomSequence()
+            }
+            
           }
         }
         
@@ -380,6 +393,7 @@ for (instance in 1:length(data.list)) {
         "StopCriterion",
         "MaxTime",
         "MaxIterations",
+        "ProblemSet",
         # functions:
         "resamp",
         "ConvertColonToVector",
@@ -389,11 +403,10 @@ for (instance in 1:length(data.list)) {
         "ImportConstructionResults",
         "KTNS",
         "RandomPerturbation",
-        "ProblemSpecificPerturbation"
+        "ProblemSpecificPerturbation",
+        "RandomSequence"
       )])
     }
     
   }
 }
-
-

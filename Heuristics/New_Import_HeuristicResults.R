@@ -2,8 +2,8 @@ ImportConstructionResults <-
   function(Instance,
            ConstructionHeuristic,
            Objective) {
-    if (dir.exists(paths = "~/GitHub/ILS_SSP-NPM/Heuristics/results/construction_heuristics/") == T) {
-      setwd("~/GitHub/ILS_SSP-NPM/Heuristics/results/construction_heuristics/")
+    if (dir.exists(paste0("~/GitHub/ILS_SSP-NPM/Heuristics/results/",ProblemSet,"/construction_heuristics/")) == T) {
+      setwd(paste0("~/GitHub/ILS_SSP-NPM/Heuristics/results/",ProblemSet,"/construction_heuristics/"))
     } else {
       directory <- readline(prompt = "Enter Directory: ")
       setwd(paste0(directory))
