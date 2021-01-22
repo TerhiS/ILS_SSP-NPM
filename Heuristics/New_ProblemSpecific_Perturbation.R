@@ -23,47 +23,52 @@ ProblemSpecificPerturbation <-
       JobSelected <- F
       while (JobSelected == F) {
         for (m in OrderedBottleneckMachines) {
-          ### sum of main processing and setup
-          BottleneckJobs <- mySequence[[m]]
-          # Setup plus processing time
-          ProcessingTimeSum <- list()
-          for (j in BottleneckJobs) {
-            ProcessingTimeSum[j] <-
-              (as.integer(myToolSwitches[j]) * SwitchingTimes[[m]]) + ProcessingTimes[[j]][m]
-          }
-          remove(j)
-          # exclude jobs not processed on that machine
-          ProcessingTimeSum[which(ProcessingTimeSum == 'NULL')] <-
-            NA
-          OrderedSumOfProcessingTimes <-
-            order(unlist(ProcessingTimeSum),
-                  decreasing = T,
-                  na.last = NA)
-          # All other machines
-          OtherMachines <- c(1:MaxMachines)[c(1:MaxMachines != m)]
-          # Select the worst job on the bottleneck machine
-          for (n in 1:length(OrderedSumOfProcessingTimes)) {
-            # Select the worst job on the bottleneck machine
-            SelectedJob <- OrderedSumOfProcessingTimes[[n]]
-            # Try for Relocation on another machine
-            for (m_new in OtherMachines) {
-              # if the job can be relocated stop the loop
-              if (length(RequiredTools[[SelectedJob]]) <= MachineCapacities[m_new]) {
-                InsertedJob <- SelectedJob
-                BottleneckMachine <- m
-                JobSelected <- T
-                break
-              }
+          # only for machines with more than one remaining job
+          if (length(mySequence[[m]]) > 1) {
+            ### sum of main processing and setup
+            BottleneckJobs <- mySequence[[m]]
+            # Setup plus processing time
+            ProcessingTimeSum <- list()
+            for (j in BottleneckJobs) {
+              ProcessingTimeSum[j] <-
+                (as.integer(myToolSwitches[j]) * SwitchingTimes[[m]]) + ProcessingTimes[[j]][m]
             }
-            rm(m_new)
+            remove(j)
+            # exclude jobs not processed on that machine
+            ProcessingTimeSum[which(ProcessingTimeSum == 'NULL')] <-
+              NA
+            OrderedSumOfProcessingTimes <-
+              order(unlist(ProcessingTimeSum),
+                    decreasing = T,
+                    na.last = NA)
+            # All other machines
+            OtherMachines <- c(1:MaxMachines)[c(1:MaxMachines != m)]
+            # Select the worst job on the bottleneck machine
+            for (n in 1:length(OrderedSumOfProcessingTimes)) {
+              # Select the worst job on the bottleneck machine
+              SelectedJob <- OrderedSumOfProcessingTimes[[n]]
+              # Try for Relocation on another machine
+              for (m_new in OtherMachines) {
+                # if the job can be relocated stop the loop
+                if (length(RequiredTools[[SelectedJob]]) <= MachineCapacities[m_new]) {
+                  InsertedJob <- SelectedJob
+                  BottleneckMachine <- m
+                  JobSelected <- T
+                  break
+                }
+              }
+              rm(m_new)
+              if (JobSelected == T)
+                break
+              if (n == length(OrderedSumOfProcessingTimes))
+                break
+            }
             if (JobSelected == T)
               break
-            if (n == length(OrderedSumOfProcessingTimes))
-              break
+            rm(n)
           }
           if (JobSelected == T)
             break
-          rm(n)
         }
         if (JobSelected == T)
           break
@@ -156,48 +161,52 @@ ProblemSpecificPerturbation <-
       JobSelected <- F
       while (JobSelected == F) {
         for (m in OrderedBottleneckMachines) {
-          BottleneckJobs <- mySequence[[m]]
-          SwitchesSum <- list()
-          for (j in BottleneckJobs) {
-            SwitchesSum[j] <- (myToolSwitches[j])
-          }
-          remove(j)
-          SwitchesSum[which(SwitchesSum == 'NULL')] <- NA
-          SwitchesSum <-
-            order(unlist(SwitchesSum),
-                  decreasing = T,
-                  na.last = NA)
-          OtherMachines <- c(1:MaxMachines)[c(1:MaxMachines != m)]
-          # Select the worst job on the bottleneck machine
-          for (n in 1:length(SwitchesSum)) {
-            # Select the worst job on the bottleneck machine
-            SelectedJob <- SwitchesSum[[n]]
-            # Try for Relocation on another machine
-            for (m_new in OtherMachines) {
-              # if the job can be relocated stop the loop
-              if (length(RequiredTools[[SelectedJob]]) <= MachineCapacities[m_new]) {
-                InsertedJob <- SelectedJob
-                BottleneckMachine <- m
-                JobSelected <- T
-                break
-              }
+          # only for machines with more than one remaining job
+          if (length(mySequence[[m]]) > 1) {
+            BottleneckJobs <- mySequence[[m]]
+            SwitchesSum <- list()
+            for (j in BottleneckJobs) {
+              SwitchesSum[j] <- (myToolSwitches[j])
             }
-            rm(m_new)
+            remove(j)
+            SwitchesSum[which(SwitchesSum == 'NULL')] <- NA
+            SwitchesSum <-
+              order(unlist(SwitchesSum),
+                    decreasing = T,
+                    na.last = NA)
+            OtherMachines <- c(1:MaxMachines)[c(1:MaxMachines != m)]
+            # Select the worst job on the bottleneck machine
+            for (n in 1:length(SwitchesSum)) {
+              # Select the worst job on the bottleneck machine
+              SelectedJob <- SwitchesSum[[n]]
+              # Try for Relocation on another machine
+              for (m_new in OtherMachines) {
+                # if the job can be relocated stop the loop
+                if (length(RequiredTools[[SelectedJob]]) <= MachineCapacities[m_new]) {
+                  InsertedJob <- SelectedJob
+                  BottleneckMachine <- m
+                  JobSelected <- T
+                  break
+                }
+              }
+              rm(m_new)
+              if (JobSelected == T)
+                break
+              if (n == length(SwitchesSum))
+                break
+              
+            }
             if (JobSelected == T)
               break
-            if (n == length(SwitchesSum))
-              break
-            
+            rm(n)
           }
           if (JobSelected == T)
             break
-          rm(n)
         }
         if (JobSelected == T)
           break
         rm(m)
       }
-      
       
       ##### Generate new sequence
       # For each insertion position...
