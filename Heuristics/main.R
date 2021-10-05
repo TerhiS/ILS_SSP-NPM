@@ -44,12 +44,12 @@ source("preparation.R",echo = F)
 #       Changes can be made to use the contruction heuristic and the ILS together.
 #       Therefore, remove the "Read Input Data"-part in ILS.R and replace it with the output variables of constr_heur.R.
 # The construction heuristics can be run individually 
-source("construction_heurstics/IEACT.R",echo = F)
-source("construction_heurstics/IGI.R",echo = F)
-source("construction_heurstics/MSR.R",echo = F)
+source("construction_heuristics/New_IEACT.R",echo = F)
+source("construction_heuristics/New_IGI.R",echo = F)
+source("construction_heuristics/MSR.R",echo = F)
 
 # run iterated local search
-source("iterated_local_search/ILS.R",echo = F)
+source("New_ILS.R",echo = F)
 # Note: The ILS heuristic applied to each %instance% generated two output files!
 # Note: the Local Search can be run individually
 source("local_search/LS.R")
